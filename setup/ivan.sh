@@ -188,8 +188,8 @@ fi
 
 echo
 userPw=$(sudo grep "^$USER" /etc/shadow | cut -f 2 -d ':')
-[[ $userPw == "$(echo 'apple2' | perl -e '$_ = <STDIN>; chomp; print crypt($_, $ARGV[0])' "${userPw%"${userPw#\$*\$*\$}"}")" ]] && isApple2Pw=1 || isApple2Pw=
-[[ $userPw == "$(echo 'raspberry' | perl -e '$_ = <STDIN>; chomp; print crypt($_, $ARGV[0])' "${userPw%"${userPw#\$*\$*\$}"}")" ]] && isRaspberryPw=1 || isRaspberryPw=
+[[ $userPw == "$(echo 'apple2' | perl -e '$_ = <STDIN>; chomp; print crypt($_, $ARGV[0])' "${userPw%"${userPw#\$*\$*\$*\$}"}")" ]] && isApple2Pw=1 || isApple2Pw=
+[[ $userPw == "$(echo 'raspberry' | perl -e '$_ = <STDIN>; chomp; print crypt($_, $ARGV[0])' "${userPw%"${userPw#\$*\$*\$*\$}"}")" ]] && isRaspberryPw=1 || isRaspberryPw=
 
 if [[ ! $isApple2Pw && ! -f /usr/local/etc/A2CLOUD-version ]]; then
 	if [[ ! $autoAnswerYes ]]; then
