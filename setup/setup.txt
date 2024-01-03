@@ -9,8 +9,8 @@
 # latest version.  This script provides that interface for upgrades.
 
 a2cBranch="master"
-a2cScriptURL="https://raw.githubusercontent.com/RasppleII/a2cloud/${a2cBranch}"
-a2cTarball="https://github.com/RasppleII/a2cloud/archive/${a2cBranch}.tar.gz"
+a2cScriptURL="https://raw.githubusercontent.com/apple-taka/a2cloud/${a2cBranch}"
+a2cTarball="https://github.com/apple-taka/a2cloud/archive/${a2cBranch}.tar.gz"
 
 # Set top_src to the location of the source tree if we're running in one
 top_src="$( dirname "${BASH_SOURCE[0]}" )/.."

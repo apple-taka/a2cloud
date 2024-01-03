@@ -236,7 +236,7 @@ while [[ $1 ]]; do
 done
 install_gsport
 install_linapple
-install_user_desktop
+install_desktop
 
 ### Emulators: Set Groups
 sudo usermod -a -G audio,video,netdev,gsport,plugdev $USER &> /dev/null

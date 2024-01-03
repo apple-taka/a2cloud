@@ -1,7 +1,7 @@
 #! /bin/bash
 # vim: set tabstop=4 shiftwidth=4 noexpandtab filetype=sh:
 
-# a2cloud-alieases - User-installed command aliases for bash
+# a2cloud-aliases - User-installed command aliases for bash
 #
 # To the extent possible under law, T. Joseph Carter and Ivan Drucker have
 # waived all copyright and related or neighboring rights to the a2cloud

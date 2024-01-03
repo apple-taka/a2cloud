@@ -606,7 +606,7 @@ if [[ $setupSerialPortLogin ]]; then
 
 	### SerialCon: Install USB serial port login
 	echo "A2CLOUD: Setting up USB shell login..."
-	sudo install -o root -g root -m 755 "$a2cSource/setup/usbgetty" /usr/local/sbin/usbgetty
+	sudo install -o root -g root -m 755 "$a2cSource/setup/usbgetty.sh" /usr/local/sbin/usbgetty
 	if [[ -n "$isSystemd" ]]; then
 		# FIXME: Okay, the way we need to fix this is that we need to do the
 		# -scanttyUSB behavior and create a symlink in udev here.  If we have
@@ -735,7 +735,7 @@ if [[ $a2CloudDisk ]]; then
 			echo "Your A2CLOUD boot disk images have been updated. You may want"
 			echo "  to update your boot floppy with their current contents using ADTPro."
 		fi
-	echo
+	    echo
 	else
 		### DiskImage: Building images from scratch
 		sudo pkill -f ADTPro
@@ -959,7 +959,7 @@ if [[ $newImageName ]]; then
 fi
 
 ### A2CLOUD: Setup the a2cloud-setup command
-echo 'wget -q -O /tmp/a2cloud-setup ${A2CLOUD_SCRIPT_URL:-https://raw.githubusercontent.com/RasppleII/a2cloud/current/}setup/setup.txt || { echo "Can'"'"'t download A2CLOUD setup scripts. Do you has internet?"; false; } && source /tmp/a2cloud-setup' | sudo tee /usr/local/bin/a2cloud-setup > /dev/null
+echo 'wget -q -O /tmp/a2cloud-setup ${A2CLOUD_SCRIPT_URL:-https://raw.githubusercontent.com/apple-taka/a2cloud/main/}setup/setup.txt || { echo "Can'"'"'t download A2CLOUD setup scripts. Do you has internet?"; false; } && source /tmp/a2cloud-setup' | sudo tee /usr/local/bin/a2cloud-setup > /dev/null
 sudo chmod ugo+x /usr/local/bin/a2cloud-setup
 
 
