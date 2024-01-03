@@ -1,0 +1,137 @@
+#! /bin/bash
+# vim: set tabstop=4 shiftwidth=4 noexpandtab filetype=sh:
+
+# install_archive_tools - temporary script for archive tools from ivan.sh
+#
+# To the extent possible under law, T. Joseph Carter and Ivan Drucker have
+# waived all copyright and related or neighboring rights to the a2cloud
+# scripts themselves.  Software used or installed by these scripts is subject
+# to other licenses.  This work is published from the United States.
+
+nulib2Version="3.1.0"
+
+a2cBinaryURL="http://blocksfree.com/downloads"
+ras2_pkginfo="/usr/local/lib/raspple2/pkginfo"
+
+# Find the path of our source directory
+a2cSource="$( dirname "${BASH_SOURCE[0]}" )/.."
+pushd $a2cSource >/dev/null
+a2cSource="$PWD"
+popd >/dev/null
+if [[ ! -f "$a2cSource/.a2cloud_source" ]]; then
+	printf "\na2cloud: cannot find a2cloud source directory in $a2cSource.\n\n"
+	exit 1
+fi
+
+# Make sure ras2_{os,arch} get set
+. "$a2cSource/scripts/system_ident" -q
+
+install_nulib2() {
+	nulib2installed=
+	if [[ -f ${ras2_pkginfo}/nulib2-version ]]; then
+		read nulib2Installed < ${ras2_pkginfo}/nulib2-version
+	fi
+
+	if [[ $nulib2Installed != $nulib2Version ]]; then
+		printf "a2cloud: Installing nulib2 %s...\n" "${nulib2Version}"
+
+		local nulibWork="$(mktemp -d /tmp/nulib.XXXXXXXXXXXX)"
+		pushd "$nulibWork" >/dev/null
+
+		if [[ ! $noPicoPkg ]]; then
+			### ArchiveTools: Install nulib2 binaries
+			wget -q "${a2cBinaryURL}/picopkg/nulib2-${nulib2Version}_${ras2_os}_${ras2_arch}.tgz"
+			if [[ -f "nulib2-${nulib2Version}_${ras2_os}_${ras2_arch}.tgz" ]]; then
+				sudo tar Pzxf "nulib2-${nulib2Version}_${ras2_os}_${ras2_arch}.tgz"
+			fi
+		fi
+
+		if [[ -f ${ras2_pkginfo}/nulib2-version ]]; then
+			read nulib2Installed < ${ras2_pkginfo}/nulib2-version
+		fi
+		if [[ $nulib2Installed != $nulib2Version ]]; then
+
+			### ArchiveTools: Install nulib2 from source
+			sudo apt-get -y install build-essential
+			sudo apt-get -y install zlib1g-dev
+			sudo apt-get -y clean
+
+			# install nulib2
+			wget -O nulib-${nulib2Version}.tar.gz "https://github.com/fadden/nulib2/archive/v${nulib2Version}.tar.gz"
+			tar zxf nulib-${nulib2Version}.tar.gz
+			cd nulib2-${nulib2Version}/nufxlib
+			./configure
+			make
+			sudo make install
+			cd ../nulib2
+			./configure
+			make
+			sudo make install
+			sudo install -d -m 755 -o root -g root "${ras2_pkginfo}"
+			echo ${nulib2Version} | sudo tee "${ras2_pkginfo}/nulib2-version" >/dev/null
+		fi
+		popd >/dev/null
+		rm -rf "$nulibWork"
+	else
+		printf "a2cloud: nulib2 %s already installed.\n" "${nulib2Version}"
+	fi
+}
+
+install_sciibin() {
+	if ! hash sciibin 2> /dev/null; then
+		### ArchiveTools: Install undoit (sciibin, etc.)
+		echo "A2CLOUD: Installing sciibin, unblu, unbit, unexec, usq..."
+
+		sudo apt-get -y install build-essential unzip
+		sudo apt-get -y clean
+		local undoitWork="$(mktemp -d /tmp/undoit.XXXXXXXXXXXX)"
+		pushd "$undoitWork" >/dev/null
+		wget -q http://web.archive.org/web/20110619163030/http://fadden.com/dl-apple2/undoit.zip
+		unzip undoit.zip
+		make
+		sudo mv sciibin unbit unblu unexec usq /usr/local/bin
+		popd >/dev/null
+		rm -rf "$undoitWork"
+	else
+		echo "A2CLOUD: sciibin, unblu, unbit, unexec, usq are already installed."
+	fi
+}
+
+install_shk2image() {
+	echo "A2CLOUD: Setting up shk2image command..."
+	### ArchiveTools: Install shk2image command
+	sudo install -o root -g root -m 755 "$a2cSource/setup/shk2image" /usr/local/bin/shk2image
+}
+
+install_unar() {
+	# Remove locally installed unar if found
+	if [[ -f /usr/local/bin/unar ]]; then
+		echo "Removing local unar in favor of the system package"
+		sudo rm -f /usr/local/bin/lsar
+		sudo rm -f /usr/local/bin/unar
+		sudo rm -f /usr/local/man/man1/lsar.1
+		sudo rm -f /usr/local/man/man1/unar.1
+	fi
+
+	# http://wakaba.c3.cx/s/apps/unarchiver.html
+	if ! hash unar 2> /dev/null; then
+		echo "a2cloud: Installing unar (The Unarchiver)..."
+		sudo apt-get -y install unar
+		sudo apt-get clean
+	else
+		echo "a2cloud: unar has already been installed."
+	fi
+}
+
+
+noPicoPkg=
+while [[ $1 ]]; do
+	if [[ $1 == -c ]]; then
+		noPicoPkg=1
+	fi
+	shift
+done
+install_nulib2
+install_sciibin
+install_shk2image
+install_unar

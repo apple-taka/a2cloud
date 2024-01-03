@@ -1,0 +1,275 @@
+#! /bin/bash
+# vim: set tabstop=4 shiftwidth=4 noexpandtab filetype=sh:
+
+# install_comm_tools - temporary script for comm tools from ivan.sh
+#
+# To the extent possible under law, T. Joseph Carter and Ivan Drucker have
+# waived all copyright and related or neighboring rights to the a2cloud
+# scripts themselves.  Software used or installed by these scripts is subject
+# to other licenses.  This work is published from the United States.
+
+# Find the path of our source directory
+a2cSource="$( dirname "${BASH_SOURCE[0]}" )/.."
+pushd $a2cSource >/dev/null
+a2cSource="$PWD"
+popd >/dev/null
+if [[ ! -f "$a2cSource/.a2cloud_source" ]]; then
+	printf "\na2cloud: cannot find a2cloud source directory in $a2cSource.\n\n"
+	exit 1
+fi
+
+# Make sure ras2_{os,arch} get set
+. "$a2cSource/scripts/system_ident" -q
+
+install_curl() {
+	if ! hash curl 2> /dev/null; then
+		### CommTools: Install curl
+		echo "A2CLOUD: Installing curl..."
+		sudo apt-get -y install curl
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: curl is already installed."
+	fi
+}
+
+install_lrzsz() {
+	if ! hash sz 2> /dev/null; then
+		### CommTools: Install lrzsz
+		echo "A2CLOUD: Installing rzsz for X/Y/Zmodem transfers..."
+		sudo apt-get -y install lrzsz
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: rzsz is already installed."
+	fi
+}
+
+install_ftp() {
+	if ! hash ftp 2> /dev/null; then
+		### CommTools: Install ftp
+		echo "A2CLOUD: Installing ftp..."
+		sudo apt-get -y install ftp
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: ftp is already installed."
+	fi
+}
+
+install_lftp() {
+	if ! hash lftp 2> /dev/null; then
+		echo "a2cloud: Installing lftp..."
+		sudo apt-get -y install lftp
+		sudo apt-get -y clean
+	else
+		echo "a2cloud: lftp is already installed."
+	fi
+}
+
+install_mc() {
+	if ! hash mc 2> /dev/null; then
+		echo "a2cloud: Installing mc..."
+		sudo apt-get -y install mc
+		sudo apt-get -y clean
+	else
+		echo "a2cloud: mc is already installed."
+	fi
+}
+
+install_lynx() {
+	if ! hash lynx 2> /dev/null; then
+		### CommTools: Install lynx
+		echo "A2CLOUD: Installing lynx..."
+		sudo apt-get -y install lynx
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: lynx is already installed."
+	fi
+}
+
+install_links() {
+	if ! hash links 2> /dev/null; then
+		### CommTools: Install links
+		echo "A2CLOUD: Installing links..."
+		sudo apt-get -y --force-yes install links
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: links is already installed."
+	fi
+}
+
+install_a2news() {
+	### CommTools: Install tin + a2news script
+	sudo install -o root -g root -m 755 "$a2cSource/setup/a2news" /usr/local/bin/a2news
+	if ! hash tin 2> /dev/null; then
+		echo "A2CLOUD: Installing tin..."
+		sudo apt-get -y install tin
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: tin is already installed."
+	fi
+
+	# Leaving this here just in case, but it should not be necessary anymore.
+
+#	### CommTools: Configure exim4 to use ipv4 to kill console errors
+#	# have exim4 use IPv4 only to prevent log errors (IPv6 is off by default in Raspbian)
+#	if [[ $(grep ' ; ::1' /etc/exim4/update-exim4.conf.conf) ]]; then
+#		echo "A2CLOUD: Setting exim4 to use only IPv4 to prevent startup error messages..."
+#		sudo sed -i 's/ ; ::1//' /etc/exim4/update-exim4.conf.conf
+#		sudo update-exim4.conf
+#		sudo rm /var/log/exim4/mainlog /var/log/exim4/paniclog &> /dev/null
+#	fi
+
+	# restore exim4 log directory if occupied by a file put there by earlier A2CLOUD versions
+	if [[ -f /var/log/exim4 ]]; then
+		echo "A2CLOUD: Restoring exim4 log directory..."
+		sudo rm /var/log/exim4
+		sudo mkdir /var/log/exim4
+		sudo chown Debian-exim:adm /var/log/exim4
+		sudo chmod 2750 /var/log/exim4
+	fi
+}
+
+install_a2chat() {
+	### CommTools: Install irssi + a2chat script
+	sudo install -o root -g root -m 755 "$a2cSource/setup/a2chat" /usr/local/bin/a2chat
+	if ! hash irssi 2> /dev/null; then
+		echo "A2CLOUD: Installing a2chat/irssi..."
+		sudo apt-get -y install irssi
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: a2chat/irssi is already installed."
+	fi
+}
+
+install_telnet() {
+	### CommTools: Install telnet
+	if ! hash telnet 2> /dev/null; then
+		echo "A2CLOUD: Installing telnet..."
+		sudo apt-get -y install telnet
+		sudo apt-get -y clean
+	else
+		echo "A2CLOUD: telnet is already installed."
+	fi
+}
+
+install_oysttyer() {
+	rm_file() {
+		if [[ -f $1 ]]; then
+			echo "Removing $1"
+			sudo rm -f "$1"
+		fi
+	}
+
+	try_rmdir() {
+		if [[ -d $1 ]]; then
+			if sudo rmdir $1 &>/dev/null; then
+				echo "Removing directory $1"
+			else
+				echo "Cannot remove $1"
+			fi
+		fi
+	}
+	### CommTools: Install Oysttyer (formerly TTYtter)
+
+	# Do we need to check for the readline module here as well?
+	local perlVersion=$(perl -e 'print $^V' | cut -c 2-)
+
+	local oysttyerWork="$(mktemp -d /tmp/oysttyer.XXXXXXXXXXXX)"
+	pushd "$oysttyerWork" >/dev/null
+
+	# Remove old ttytter
+	# Previous versions of a2cloud symlinked ttytter to oysttyer.  I don't think
+	# we want to do that, because Debian won't in buster when we start using
+	# their oysttyer package.
+	if [[ -f /usr/local/bin/ttytter || -f /usr/local/share/perl/${perlVersion}/Term/ReadLine/TTYtter.pm ]]; then
+		echo "Removing ttytter in favor of oysttyer..."
+		sudo rm -f /usr/local/bin/ttytter
+	fi
+
+	# Now install the Debian's package
+	echo "Installing Debian's Term::ReadKey (libterm-readline-gnu-perl)..."
+	sudo apt-get -y install libterm-readline-gnu-perl
+
+	# Remove locally installed Term::ReadKey (libterm-readline-gnu-perl
+	if [[ -f /usr/local/man/man3/Term::ReadKey.3pm ]]; then
+		cat <<-EOF
+		You have a locally installed Term::ReadKey from an older version of a2cloud.
+
+		We will try to remove it, but locally installed perl modules are rather
+		difficult to completely remove.  What we cannot remove will not interfere
+		with a running system, but if you like a tidy system, you'll need to clean
+		up a few perl files yourself.
+
+		EOF
+		rm_file "/usr/local/man/man3/Term::ReadKey.3pm"
+
+		# Deleting perl modules properly is hard, next to impossible, and this
+		# could be in man places.  We'll do what we can.
+		for ver in 5.14.2 5.20.2 $perlVersion; do
+			for perlDir in perl arm-linux-gnueabihf/perl i686-linux-gnu/perl x86_64-linux-gnu/perl; do
+				if [[ -f /usr/local/lib/$perlDir/$ver/Term/ReadKey.pm ]]; then
+					rm_file "/usr/local/lib/$perlDir/$ver/Term/ReadKey.pm"
+					try_rmdir "/usr/local/lib/$perlDir/$ver/Term"
+					rm_file "/usr/local/lib/$perlDir/$ver/auto/Term/ReadKey/autosplit.ix"
+					rm_file "/usr/local/lib/$perlDir/$ver/auto/Term/ReadKey/ReadKey.so"
+					try_rmdir "/usr/local/lib/$perlDir/$ver/auto/Term/ReadKey"
+					try_rmdir "/usr/local/lib/$perlDir/$ver/auto/Term"
+					echo "Additional cleaning may be needed under:"
+					echo "  /usr/local/lib/$perlDir/$ver"
+				fi
+			done
+		done
+	fi
+
+	# Old TTYtter author still maintains the readline module for oysttyer
+	echo "Installing Term::ReadLine::TTYtter..."
+	if sudo apt-get -y install libterm-readline-ttytter-perl; then
+		# We have a package now, so remove any locally installed version
+		if [[ -f /usr/local/share/perl/$perlVersion/Term/ReadLine/TTYtter.pm ]]; then
+			echo "Removing local Term::ReadLine::TTYtter in favor of the package we installed."
+			sudo rm -f "/usr/local/share/perl/$perlVersion/Term/ReadLine/readline_ttytter.pm"
+			sudo rm -f "/usr/local/share/perl/$perlVersion/Term/ReadLine/TTYtter.pm"
+		fi
+	else
+		# We haven't got a package, install it locally
+		echo "No package. That's all right, we'll install it locally..."
+
+		# We don't need to make anything for this, just copy the files
+		wget -O Term-ReadLine-TTYtter-1.4.tar.gz http://search.cpan.org/CPAN/authors/id/C/CK/CKAISER/Term-ReadLine-TTYtter-1.4.tar.gz
+		tar zxf Term-ReadLine-TTYtter-1.4.tar.gz
+		cd Term-ReadLine-TTYtter-1.4
+		sudo install -m 755 -o root -g root -d /usr/local/share/perl/$perlVersion/Term/ReadLine
+		sudo install -m 644 -o root -g root ReadLine/readline_ttytter.pm ReadLine/TTYtter.pm /usr/local/share/perl/$perlVersion/Term/ReadLine
+		cd ..
+	fi
+
+	# Actually install oysttyer now, if needed
+	echo "Installing oysttyer..."
+	if sudo apt-get -y install oysttyer; then
+		if [[ -f /usr/local/bin/oysttyer ]]; then
+			echo "Removing local oysttyer in favor of the package we installed."
+			sudo rm -f /usr/local/bin/oysttyer
+		fi
+	else
+		echo "No package. That's all right, we'll install it locally..."
+		wget -O oysttyer-2.9.1.tar.gz https://github.com/oysttyer/oysttyer/archive/2.9.1.tar.gz
+		tar -zxf oysttyer-2.9.1.tar.gz
+		sudo install -m 755 -o root -g root oysttyer-2.9.1/oysttyer.pl /usr/local/bin/oysttyer
+	fi
+
+	sudo apt-get clean
+
+	popd >/dev/null
+	rm -rf "$oysttyerWork"
+}
+
+install_curl
+install_lrzsz
+install_ftp
+install_lftp
+install_mc
+install_lynx
+install_links
+install_a2news
+install_a2chat
+install_telnet
+install_oysttyer
