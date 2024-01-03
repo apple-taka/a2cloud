@@ -510,7 +510,7 @@ fi
 
 ### A2CLOUD: Install serial port rules/scripts
 echo "A2CLOUD: Setting up USB port serial adapter handler..."
-sudo install -o root -g root -m 755 "$a2cSource/setup/ttyusbhandler" /usr/local/sbin/ttyusbhandler
+sudo install -o root -g root -m 755 "$a2cSource/setup/ttyusbhandler.sh" /usr/local/sbin/ttyusbhandler
 
 if [[ ! -f /etc/udev/rules.d/50-usb.rules ]]; then
 	echo "A2CLOUD: Creating device rules for USB ports..."
