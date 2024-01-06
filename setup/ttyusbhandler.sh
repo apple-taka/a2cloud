@@ -42,7 +42,7 @@ elif [[ $1 == "add" ]]; then
 		touch /tmp/udev-ttyUSBlower-added
 		pkill -f "[A]DTPro"
 		pkill -f "[u]sbgetty"
-		exec echo "/usr/local/adtpro/adtpro.sh headless serial" | at -M now
+		exec echo "/usr/local/bin/adtpro.sh headless serial" | at -M now
 	else # ttyUSBupper
 		rm /tmp/udev-ttyUSBupper-added &> /dev/null
 		touch /tmp/udev-ttyUSBupper-added
