@@ -619,13 +619,13 @@ if [[ $setupSerialPortLogin ]]; then
 		# (called by udev, as before) now restarts the service upon adapter insertion.
 		# This might not be the best way to do it, but it works for now,
 		# apart from a 30 second delay before the getty becomes available.
-		sudo install -o root -g root -m 644 "$a2cSource/setup/usbgetty-systemd.service" /etc/systemd/system/getty.target.wants/usbgetty@.service
+		sudo install -o root -g root -m 644 "$a2cSource/setup/usbgetty-systemd.service" /etc/systemd/system/usbgetty@.service
 		pwd=$PWD
 		cd /etc/systemd/system/getty.target.wants
 		grep -o 'SYMLINK+="ttyUSB.*,' /etc/udev/rules.d/50-usb.rules | cut -d '"' -f 2 | \
 			while read ttyUSB; do
 				sudo rm usbgetty@${ttyUSB}.service 2> /dev/null
-				sudo ln -s usbgetty@.service usbgetty@${ttyUSB}.service
+				sudo ln -s ../usbgetty@.service usbgetty@${ttyUSB}.service
 			done
 		cd "$pwd"
 		sudo systemctl daemon-reload

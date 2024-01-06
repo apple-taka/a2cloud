@@ -12,7 +12,7 @@ isSystemd=
 isSysVInit=
 # If you really want something else, *you* maintain it!
 if command -v systemctl > /dev/null && systemctl | grep -q '\-\.mount'; then
-	gettyFile="/etc/systemd/system/getty.target.wants/usbgetty@.service"
+	gettyFile="/etc/systemd/system/usbgetty@.service"
 elif [[ -f /etc/inittab ]]; then
 	gettyFile="/etc/inittab"
 fi
